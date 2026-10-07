@@ -1,0 +1,2541 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supervisi Coaching - SMPN 1 Maiwa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { 
+            font-family: 'Inter', system-ui, sans-serif; 
+            background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);
+            min-height: 100vh;
+        }
+        .tab-active { 
+            border-bottom: 3px solid #2563eb; 
+            color: #2563eb; 
+            font-weight: 700; 
+            background: #eff6ff;
+            border-radius: 8px 8px 0 0;
+        }
+        .tab-inactive { 
+            color: #64748b; 
+            border-bottom: 3px solid transparent;
+        }
+        .tab-inactive:hover { color: #2563eb; background: #f8fafc; }
+        .accordion-content { display: none; }
+        .accordion-content.active { display: block; }
+        .indicator-item { transition: all 0.2s; }
+        .indicator-item:focus-within { 
+            background-color: #eff6ff; 
+            border-left: 3px solid #2563eb;
+            padding-left: 8px;
+            margin-left: -11px;
+        }
+        .card-blue {
+            background: white;
+            border: 1px solid #dbeafe;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.08), 0 2px 4px -2px rgba(37, 99, 235, 0.06);
+        }
+        .header-gradient {
+            background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            transition: all 0.2s;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        .btn-green {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            transition: all 0.2s;
+        }
+        .btn-green:hover {
+            background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+        }
+        .btn-orange {
+            background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+            transition: all 0.2s;
+        }
+        .btn-orange:hover {
+            background: linear-gradient(135deg, #c2410c 0%, #9a3412 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3);
+        }
+        textarea:focus, input:focus, select:focus {
+            outline: none;
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+        .badge-blue {
+            background: #dbeafe;
+            color: #1d4ed8;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge-green {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge-yellow {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .status-pra { background: #fef3c7; color: #92400e; }
+        .status-observasi { background: #dbeafe; color: #1e40af; }
+        .status-selesai { background: #d1fae5; color: #065f46; }
+        
+        .login-screen {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 16px;
+        }
+        .login-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+        }
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 90;
+            padding: 16px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .hidden-screen { display: none !important; }
+        
+        .login-role-tab { transition: all 0.2s; }
+        .login-role-tab.active {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        .login-role-tab.inactive { background: #f1f5f9; color: #64748b; }
+        
+        .login-footer {
+            text-align: center;
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid #e5e7eb;
+        }
+        .login-footer p { font-size: 11px; color: #94a3b8; line-height: 1.5; }
+        .login-footer .dev-name { color: #2563eb; font-weight: 600; }
+        
+        .username-badge {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            color: #1e40af;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(2px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+        .loading-overlay.active { display: flex; }
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #dbeafe;
+            border-top: 4px solid #2563eb;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            z-index: 300;
+            animation: slideIn 0.3s ease;
+        }
+        .toast.success { background: linear-gradient(135deg, #059669 0%, #047857 100%); }
+        .toast.error { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); }
+        .toast.info { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; }
+            .card-blue { box-shadow: none; border: 1px solid #e5e7eb; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LOADING OVERLAY -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- ================= LOGIN SCREEN ================= -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-card">
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl mb-3 shadow-lg">
+                    <i class="fas fa-chalkboard-teacher text-white text-2xl"></i>
+                </div>
+                <h1 class="text-xl font-bold text-gray-800">Supervisi Coaching</h1>
+                <p class="text-sm text-gray-500">SMP Negeri 1 Maiwa</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 mb-5">
+                <button onclick="switchLoginRole('observer')" id="roleBtnObserver" class="login-role-tab active py-2.5 rounded-xl text-sm font-semibold">
+                    <i class="fas fa-user-shield mr-1"></i> Observer
+                </button>
+                <button onclick="switchLoginRole('guru')" id="roleBtnGuru" class="login-role-tab inactive py-2.5 rounded-xl text-sm font-semibold">
+                    <i class="fas fa-user mr-1"></i> Guru
+                </button>
+            </div>
+
+            <div id="loginFormObserver" class="space-y-4">
+                <div>
+                    <label class="text-sm font-medium text-gray-700 mb-1 block">Email</label>
+                    <div class="relative">
+                        <i class="fas fa-envelope absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                        <input type="email" id="loginEmail" value="kepsek@smpn1maiwa.sch.id" class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm" placeholder="email@sekolah.id">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-700 mb-1 block">Password</label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                        <input type="password" id="loginPassword" value="admin123" class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm" placeholder="••••••••">
+                    </div>
+                </div>
+                <button onclick="handleLoginObserver()" class="btn-primary w-full text-white py-3 rounded-xl text-sm font-semibold">
+                    <i class="fas fa-sign-in-alt mr-2"></i> Masuk sebagai Observer
+                </button>
+            </div>
+
+            <div id="loginFormGuru" class="space-y-4 hidden">
+                <div>
+                    <label class="text-sm font-medium text-gray-700 mb-1 block">Username</label>
+                    <div class="relative">
+                        <i class="fas fa-user absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                        <input type="text" id="loginGuruNama" class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm" placeholder="username (cth: budisantoso)">
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1"><i class="fas fa-info-circle"></i> Username: nama tanpa gelar, huruf kecil, tanpa spasi</p>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-700 mb-1 block">PIN (6 digit)</label>
+                    <div class="relative">
+                        <i class="fas fa-key absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                        <input type="password" id="loginGuruPin" maxlength="6" class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm tracking-widest" placeholder="••••••">
+                    </div>
+                </div>
+                <button onclick="handleLoginGuru()" class="btn-green w-full text-white py-3 rounded-xl text-sm font-semibold">
+                    <i class="fas fa-sign-in-alt mr-2"></i> Masuk sebagai Guru
+                </button>
+            </div>
+
+            <div class="login-footer">
+                <p>Dikembangkan oleh:</p>
+                <p class="dev-name">Darmawati, S.Pd., M.Pd.</p>
+                <p>Guru SMPN 1 Anggeraja</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MAIN APP OBSERVER ================= -->
+    <div id="mainApp" class="hidden-screen">
+        
+        <header class="header-gradient shadow-lg sticky top-0 z-50 no-print">
+            <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
+                        <i class="fas fa-chalkboard-teacher text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-white text-sm md:text-base leading-tight">Supervisi Coaching</h1>
+                        <p class="text-blue-100 text-xs">SMP Negeri 1 Maiwa</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="bg-white/20 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full font-medium hidden md:inline">
+                        <i class="fas fa-user-shield mr-1"></i> <span id="headerUser">Kepala Sekolah</span>
+                    </span>
+                    <button onclick="handleLogout()" class="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-2 rounded-lg transition" title="Logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-5xl mx-auto p-4 mb-24">
+            
+            <div class="flex border-b-2 border-blue-100 mb-5 no-print overflow-x-auto gap-1">
+                <button onclick="switchMainMenu('dashboard')" id="menu-dashboard" class="px-5 py-3 text-sm tab-active whitespace-nowrap transition-all">
+                    <i class="fas fa-tachometer-alt mr-1"></i> Dashboard
+                </button>
+                <button onclick="switchMainMenu('guru')" id="menu-guru" class="px-5 py-3 text-sm tab-inactive whitespace-nowrap transition-all">
+                    <i class="fas fa-users mr-1"></i> Data Guru
+                </button>
+                <button onclick="switchMainMenu('rekap')" id="menu-rekap" class="px-5 py-3 text-sm tab-inactive whitespace-nowrap transition-all">
+                    <i class="fas fa-chart-bar mr-1"></i> Rekap Supervisi
+                </button>
+                <button onclick="switchMainMenu('supervisi')" id="menu-supervisi" class="px-5 py-3 text-sm tab-inactive whitespace-nowrap transition-all">
+                    <i class="fas fa-clipboard-check mr-1"></i> Sesi Supervisi
+                </button>
+                <button onclick="switchMainMenu('kredensial')" id="menu-kredensial" class="px-5 py-3 text-sm tab-inactive whitespace-nowrap transition-all">
+                    <i class="fas fa-key mr-1"></i> Kredensial
+                </button>
+            </div>
+
+            <!-- DASHBOARD -->
+            <div id="content-dashboard" class="menu-content">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
+                    <div class="card-blue p-5">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="bg-blue-100 p-2 rounded-lg"><i class="fas fa-users text-blue-600"></i></div>
+                        </div>
+                        <p class="text-2xl font-bold text-gray-800" id="statTotalGuru">0</p>
+                        <p class="text-xs text-gray-500">Total Guru</p>
+                    </div>
+                    <div class="card-blue p-5">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="bg-yellow-100 p-2 rounded-lg"><i class="fas fa-clock text-yellow-600"></i></div>
+                        </div>
+                        <p class="text-2xl font-bold text-gray-800" id="statPra">0</p>
+                        <p class="text-xs text-gray-500">Tahap Pra-Observasi</p>
+                    </div>
+                    <div class="card-blue p-5">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="bg-blue-100 p-2 rounded-lg"><i class="fas fa-eye text-blue-600"></i></div>
+                        </div>
+                        <p class="text-2xl font-bold text-gray-800" id="statObservasi">0</p>
+                        <p class="text-xs text-gray-500">Tahap Observasi</p>
+                    </div>
+                    <div class="card-blue p-5">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="bg-green-100 p-2 rounded-lg"><i class="fas fa-check-circle text-green-600"></i></div>
+                        </div>
+                        <p class="text-2xl font-bold text-gray-800" id="statSelesai">0</p>
+                        <p class="text-xs text-gray-500">Selesai</p>
+                    </div>
+                </div>
+
+                <div class="card-blue p-5 mb-5">
+                    <h3 class="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                        <i class="fas fa-user-tie text-blue-600"></i> Data Observer (Kepala Sekolah)
+                    </h3>
+                    <div id="observerInfo" class="grid grid-cols-2 gap-3 text-sm">
+                        <p class="text-xs text-gray-500 italic col-span-2">Memuat data...</p>
+                    </div>
+                    <button onclick="openObserverModal()" class="mt-4 text-xs text-blue-600 hover:text-blue-800 font-medium">
+                        <i class="fas fa-edit mr-1"></i> Edit Data Observer
+                    </button>
+                </div>
+
+                <div class="card-blue p-5">
+                    <h3 class="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                        <i class="fas fa-bolt text-blue-600"></i> Aksi Cepat
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <button onclick="openGuruModal()" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white p-4 rounded-xl text-sm font-semibold text-left transition">
+                            <i class="fas fa-user-plus mr-2"></i> Tambah Akun Guru Baru
+                        </button>
+                        <button onclick="switchMainMenu('rekap')" class="bg-gradient-to-r from-blue-50 to-white border border-blue-200 hover:border-blue-400 text-blue-700 p-4 rounded-xl text-sm font-semibold text-left transition">
+                            <i class="fas fa-list mr-2"></i> Lihat Rekap Supervisi
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DATA GURU -->
+            <div id="content-guru" class="menu-content hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="font-bold text-gray-800 text-lg"><i class="fas fa-users text-blue-600 mr-2"></i>Akun Guru</h2>
+                    <button onclick="openGuruModal()" class="btn-primary text-white px-4 py-2 rounded-xl text-sm font-semibold">
+                        <i class="fas fa-plus mr-1"></i> Tambah Akun
+                    </button>
+                </div>
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-3 rounded-r-lg mb-4 text-xs text-blue-800">
+                    <i class="fas fa-info-circle mr-1"></i> <strong>Info:</strong> Anda hanya perlu mendaftarkan <strong>Nama</strong> dan <strong>PIN</strong> guru. Username & data lengkap akan di-generate/diisi otomatis.
+                </div>
+                <div id="guruList" class="space-y-3">
+                    <div class="card-blue p-8 text-center">
+                        <div class="spinner mx-auto" style="width: 32px; height: 32px; border-width: 3px;"></div>
+                        <p class="text-gray-500 text-sm mt-3">Memuat data guru...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- REKAP -->
+            <div id="content-rekap" class="menu-content hidden">
+                <h2 class="font-bold text-gray-800 text-lg mb-4"><i class="fas fa-chart-bar text-blue-600 mr-2"></i>Rekap Supervisi Guru</h2>
+                
+                <div class="card-blue p-4 mb-4 flex flex-wrap gap-2 items-center">
+                    <span class="text-xs font-medium text-gray-500">Filter Status:</span>
+                    <button onclick="filterRekap('all')" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-600 text-white">Semua</button>
+                    <button onclick="filterRekap('pra')" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600">Pra-Observasi</button>
+                    <button onclick="filterRekap('observasi')" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600">Observasi</button>
+                    <button onclick="filterRekap('selesai')" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600">Selesai</button>
+                </div>
+
+                <div id="rekapList" class="space-y-3"></div>
+            </div>
+
+            <!-- SESI SUPERVISI -->
+            <div id="content-supervisi" class="menu-content hidden">
+                <div class="card-blue p-5 mb-4">
+                    <h3 class="font-bold text-gray-800 mb-3"><i class="fas fa-play-circle text-blue-600 mr-2"></i>Mulai Sesi Supervisi</h3>
+                    <p class="text-xs text-gray-500 mb-3">Pilih guru yang akan disupervisi untuk membuka form Pra-Observasi, Observasi, dan Pasca-Observasi.</p>
+                    <select id="selectGuruSesi" class="w-full text-sm border border-blue-200 rounded-xl p-3 mb-3">
+                        <option value="">-- Pilih Guru --</option>
+                    </select>
+                    <button onclick="startSesi()" class="btn-primary w-full text-white py-3 rounded-xl text-sm font-semibold">
+                        <i class="fas fa-arrow-right mr-1"></i> Buka Sesi Supervisi
+                    </button>
+                </div>
+
+                <div id="sesiAktif" class="hidden">
+                    <div class="card-blue p-5 mb-5">
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="flex items-center gap-2">
+                                <div class="bg-blue-100 p-2 rounded-lg"><i class="fas fa-id-card text-blue-600"></i></div>
+                                <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Form A: Identitas & Kesepakatan</h2>
+                            </div>
+                            <span id="sesiStatusBadge" class="status-badge status-pra">Pra-Observasi</span>
+                        </div>
+                        <div id="formAInfo" class="grid grid-cols-2 gap-3 text-sm"></div>
+                    </div>
+
+                    <div class="flex border-b-2 border-blue-100 mb-5 no-print overflow-x-auto gap-1">
+                        <button onclick="switchTab('pra')" id="tab-pra" class="px-5 py-3 text-sm tab-active whitespace-nowrap transition-all">
+                            <i class="fas fa-clipboard-list mr-1"></i> Pra-Observasi
+                        </button>
+                        <button onclick="switchTab('observasi')" id="tab-observasi" class="px-5 py-3 text-sm tab-inactive whitespace-nowrap transition-all">
+                            <i class="fas fa-eye mr-1"></i> Observasi Kelas
+                        </button>
+                        <button onclick="switchTab('pasca')" id="tab-pasca" class="px-5 py-3 text-sm tab-inactive whitespace-nowrap transition-all">
+                            <i class="fas fa-comments mr-1"></i> Pasca-Observasi
+                        </button>
+                    </div>
+
+                    <!-- TAB PRA-OBSERVASI -->
+                    <div id="content-pra" class="tab-content">
+                        <div class="card-blue p-5 mb-4">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="badge-blue">Form B</span>
+                                <h3 class="font-bold text-gray-800">Telaah Perencanaan (Modul Ajar/RPP)</h3>
+                            </div>
+                            <p class="text-xs text-gray-500 mb-4">Lakukan telaah bersama pendidik baru secara dialogis.</p>
+                            <div class="space-y-3">
+                                <div class="border border-blue-100 rounded-xl p-4 bg-blue-50/30">
+                                    <p class="font-semibold text-sm text-blue-800 mb-2"><i class="fas fa-bullseye mr-1"></i> 1. Tujuan Pembelajaran</p>
+                                    <textarea id="formB1a" class="w-full text-sm border border-blue-200 rounded-lg p-3 bg-white" rows="2" placeholder="Catatan apresiasi kekuatan..."></textarea>
+                                    <textarea id="formB1b" class="w-full text-sm border border-blue-200 rounded-lg p-3 bg-white mt-2" rows="2" placeholder="Catatan pengayaan & diskusi suportif..."></textarea>
+                                </div>
+                                <div class="border border-blue-100 rounded-xl p-4 bg-blue-50/30">
+                                    <p class="font-semibold text-sm text-blue-800 mb-2"><i class="fas fa-route mr-1"></i> 2. Alur Pengalaman Belajar Mendalam</p>
+                                    <textarea id="formB2" class="w-full text-sm border border-blue-200 rounded-lg p-3 bg-white" rows="2" placeholder="Catatan apresiasi..."></textarea>
+                                </div>
+                                <div class="border border-blue-100 rounded-xl p-4 bg-blue-50/30">
+                                    <p class="font-semibold text-sm text-blue-800 mb-2"><i class="fas fa-heart mr-1"></i> 3. Penerapan Prinsip Pembelajaran Mendalam</p>
+                                    <textarea id="formB3" class="w-full text-sm border border-blue-200 rounded-lg p-3 bg-white" rows="2" placeholder="Catatan apresiasi..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-blue p-5">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="badge-blue">Form C</span>
+                                <h3 class="font-bold text-gray-800">Panduan Wawancara Coaching</h3>
+                            </div>
+                            <div class="space-y-4">
+                                <div class="border-l-4 border-blue-500 pl-4">
+                                    <label class="text-sm font-semibold text-gray-800">1. Tujuan Supervisi</label>
+                                    <p class="text-xs text-blue-600 italic mb-2">"Bagian mana dari proses mengajar yang paling ingin ditingkatkan?"</p>
+                                    <textarea id="formC1" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2"></textarea>
+                                </div>
+                                <div class="border-l-4 border-blue-500 pl-4">
+                                    <label class="text-sm font-semibold text-gray-800">2. Tujuan Pembelajaran</label>
+                                    <p class="text-xs text-blue-600 italic mb-2">"Tujuan apa yang ingin dicapai murid hari ini?"</p>
+                                    <textarea id="formC2" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2"></textarea>
+                                </div>
+                                <div class="border-l-4 border-blue-500 pl-4">
+                                    <label class="text-sm font-semibold text-gray-800">3. Strategi / Model Pembelajaran</label>
+                                    <p class="text-xs text-blue-600 italic mb-2">"Strategi apa yang dipilih? Mengapa?"</p>
+                                    <textarea id="formC3" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2"></textarea>
+                                </div>
+                            </div>
+                            <button onclick="updateStatusSesi('observasi')" class="btn-primary mt-5 w-full text-white py-3 rounded-xl text-sm font-semibold">
+                                <i class="fas fa-arrow-right mr-1"></i> Lanjut ke Observasi Kelas
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- TAB OBSERVASI (LENGKAP 49 INDIKATOR) -->
+                    <div id="content-observasi" class="tab-content hidden">
+                        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-5 rounded-r-xl text-xs text-blue-800">
+                            <i class="fas fa-info-circle mr-1"></i> <strong>Prinsip Non-Evaluatif:</strong> Catat bukti faktual secara deskriptif. Tidak ada skor angka atau centang Ya/Tidak.
+                        </div>
+                        
+                        <div class="card-blue overflow-hidden mb-3">
+                            <button onclick="toggleAccordion('acc-1')" class="w-full px-5 py-4 bg-gradient-to-r from-blue-50 to-white flex justify-between items-center text-left">
+                                <span class="font-bold text-sm text-blue-800"><i class="fas fa-play-circle mr-2"></i>I. KEGIATAN AWAL PEMBELAJARAN</span>
+                                <i class="fas fa-chevron-down text-blue-500"></i>
+                            </button>
+                            <div id="acc-1" class="accordion-content p-5 space-y-4">
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">1</span> Menyampaikan salam dan mengondisikan fisik serta psikis murid dalam mengawali kegiatan pembelajaran.</p>
+                                    <textarea id="obs_1" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">2</span> Meninjau kembali keyakinan/kesepakatan kelas yang telah disepakati bersama.</p>
+                                    <textarea id="obs_2" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">3</span> Melaksanakan asesmen formatif awal untuk mengetahui kesiapan belajar murid <span class="badge-blue ml-1">Mindful</span></p>
+                                    <textarea id="obs_3" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">4</span> Mengaitkan materi pembelajaran sebelumnya dengan materi yang akan dipelajari (Apersepsi).</p>
+                                    <textarea id="obs_4" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">5</span> Menyampaikan Tujuan Pembelajaran yang ingin dicapai.</p>
+                                    <textarea id="obs_5" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">6</span> Menjelaskan garis besar alur kegiatan pembelajaran yang akan dilakukan.</p>
+                                    <textarea id="obs_6" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">7</span> Menyampaikan rencana asesmen dan kriteria ketercapaian tujuan pembelajaran.</p>
+                                    <textarea id="obs_7" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">8</span> Menyampaikan manfaat bermakna dari materi yang dipelajari bagi kehidupan sehari-hari murid <span class="badge-blue ml-1">Meaningful</span></p>
+                                    <textarea id="obs_8" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">9</span> Melakukan kegiatan penyegaran/pemicu semangat (Ice Breaking/KSE) yang menggembirakan <span class="badge-blue ml-1">Joyful</span></p>
+                                    <textarea id="obs_9" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-blue overflow-hidden mb-3">
+                            <button onclick="toggleAccordion('acc-2')" class="w-full px-5 py-4 bg-gradient-to-r from-blue-50 to-white flex justify-between items-center text-left">
+                                <span class="font-bold text-sm text-blue-800"><i class="fas fa-brain mr-2"></i>II. KEGIATAN INTI — PENERAPAN PRINSIP DEEP LEARNING</span>
+                                <i class="fas fa-chevron-down text-blue-500"></i>
+                            </button>
+                            <div id="acc-2" class="accordion-content p-5 space-y-4">
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">10</span> <span class="badge-blue">Mindful</span> Memfasilitasi suasana belajar yang mendorong kehadiran penuh dan fokus murid.</p>
+                                    <textarea id="obs_10" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">11</span> <span class="badge-blue">Mindful</span> Memberikan ruang bagi murid untuk mengekspresikan kesadaran emosional dan ide secara terbuka.</p>
+                                    <textarea id="obs_11" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">12</span> <span class="badge-blue">Mindful</span> Memerhatikan diferensiasi kebutuhan belajar dan kesiapan individu murid.</p>
+                                    <textarea id="obs_12" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">13</span> <span class="badge-blue">Meaningful</span> Menghubungkan materi dengan pengalaman nyata, konteks lokal, atau isu aktual.</p>
+                                    <textarea id="obs_13" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">14</span> <span class="badge-blue">Meaningful</span> Mendorong murid menemukan alasan 'mengapa' materi ini penting dipelajari.</p>
+                                    <textarea id="obs_14" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">15</span> <span class="badge-blue">Meaningful</span> Memfasilitasi kegiatan yang menghasilkan pemahaman konseptual yang mendalam.</p>
+                                    <textarea id="obs_15" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">16</span> <span class="badge-blue">Joyful</span> Menciptakan iklim kelas yang positif, ramah, aman, dan bebas dari rasa takut salah.</p>
+                                    <textarea id="obs_16" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">17</span> <span class="badge-blue">Joyful</span> Menggunakan metode interaktif yang memicu antusiasme dan rasa ingin tahu murid.</p>
+                                    <textarea id="obs_17" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">18</span> <span class="badge-blue">Joyful</span> Memberikan apresiasi atas usaha, proses, dan keberanian murid berpartisipasi.</p>
+                                    <textarea id="obs_18" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-blue overflow-hidden mb-3">
+                            <button onclick="toggleAccordion('acc-3')" class="w-full px-5 py-4 bg-gradient-to-r from-blue-50 to-white flex justify-between items-center text-left">
+                                <span class="font-bold text-sm text-blue-800"><i class="fas fa-lightbulb mr-2"></i>III. KEGIATAN INTI — PENGALAMAN BELAJAR (MEMAHAMI, MENGAPLIKASI, MEREFLEKSI)</span>
+                                <i class="fas fa-chevron-down text-blue-500"></i>
+                            </button>
+                            <div id="acc-3" class="accordion-content p-5 space-y-4">
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">19</span> <span class="badge-blue">Memahami</span> Menyampaikan penjelasan konsep secara runtut, jelas, dan mudah dipahami.</p>
+                                    <textarea id="obs_19" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">20</span> <span class="badge-blue">Memahami</span> Menggunakan beragam sumber belajar (visual, auditori, kinestetik/digital).</p>
+                                    <textarea id="obs_20" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">21</span> <span class="badge-blue">Memahami</span> Memanfaatkan media/alat peraga konkret untuk memperjelas konsep abstrak.</p>
+                                    <textarea id="obs_21" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">22</span> <span class="badge-blue">Memahami</span> Mendorong murid aktif mengonstruksi pemahaman sendiri melalui eksplorasi.</p>
+                                    <textarea id="obs_22" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">23</span> <span class="badge-blue">Memahami</span> Mengajukan pertanyaan pemantik berpikir tingkat tinggi (HOTS).</p>
+                                    <textarea id="obs_23" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">24</span> <span class="badge-blue">Memahami</span> Memberikan kesempatan murid mengekspresikan pemahaman dalam pelbagai bentuk.</p>
+                                    <textarea id="obs_24" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">25</span> <span class="badge-blue">Memahami</span> Mengintegrasikan asesmen formatif proses untuk mengecek pemahaman murid.</p>
+                                    <textarea id="obs_25" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">26</span> <span class="badge-blue">Mengaplikasi</span> Memfasilitasi kegiatan praktik, simulasi, atau pemecahan masalah nyata.</p>
+                                    <textarea id="obs_26" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">27</span> <span class="badge-blue">Mengaplikasi</span> Mendorong murid menerapkan konsep pada situasi baru atau konteks lain.</p>
+                                    <textarea id="obs_27" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">28</span> <span class="badge-blue">Mengaplikasi</span> Membimbing murid menghasilkan karya, proyek, atau solusi kontekstual.</p>
+                                    <textarea id="obs_28" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">29</span> <span class="badge-blue">Merefleksi</span> Mendorong murid menilai kembali proses belajar dan strategi yang digunakan.</p>
+                                    <textarea id="obs_29" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">30</span> <span class="badge-blue">Merefleksi</span> Memfasilitasi murid mengidentifikasi tantangan dan cara menyelesaikannya.</p>
+                                    <textarea id="obs_30" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">31</span> <span class="badge-blue">Merefleksi</span> Mendorong murid merumuskan rencana tindak lanjut pengembangan diri.</p>
+                                    <textarea id="obs_31" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-blue overflow-hidden mb-3">
+                            <button onclick="toggleAccordion('acc-4')" class="w-full px-5 py-4 bg-gradient-to-r from-blue-50 to-white flex justify-between items-center text-left">
+                                <span class="font-bold text-sm text-blue-800"><i class="fas fa-cubes mr-2"></i>IV. KEGIATAN INTI — KERANGKA PEMBELAJARAN</span>
+                                <i class="fas fa-chevron-down text-blue-500"></i>
+                            </button>
+                            <div id="acc-4" class="accordion-content p-5 space-y-4">
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">32</span> <span class="badge-blue">Praktik Pedagogik</span> Menerapkan model inovatif (PBL, PjBL, Inquiry, STEM).</p>
+                                    <textarea id="obs_32" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">33</span> <span class="badge-blue">Praktik Pedagogik</span> Mengembangkan keterampilan 6C (Critical Thinking, Creativity, Collaboration, Communication, Character, Citizenship).</p>
+                                    <textarea id="obs_33" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">34</span> <span class="badge-blue">Praktik Pedagogik</span> Memberikan umpan balik konstruktif dan berkelanjutan saat proses belajar.</p>
+                                    <textarea id="obs_34" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">35</span> <span class="badge-blue">Kemitraan</span> Mendorong kolaborasi antar-murid dalam kelompok heterogen.</p>
+                                    <textarea id="obs_35" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">36</span> <span class="badge-blue">Kemitraan</span> Membangun relasi kemitraan saling menghargai antara guru dan murid.</p>
+                                    <textarea id="obs_36" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">37</span> <span class="badge-blue">Lingkungan</span> Mengelola tata ruang kelas yang mendukung interaksi aktif dan kolaborasi.</p>
+                                    <textarea id="obs_37" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">38</span> <span class="badge-blue">Lingkungan</span> Mendorong budaya saling mendukung, inklusif, dan menghargai perbedaan.</p>
+                                    <textarea id="obs_38" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">39</span> <span class="badge-blue">Lingkungan</span> Memanfaatkan lingkungan sekitar sekolah sebagai sumber belajar.</p>
+                                    <textarea id="obs_39" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">40</span> <span class="badge-blue">Digital</span> Mengintegrasikan teknologi digital untuk eksplorasi dan kolaborasi.</p>
+                                    <textarea id="obs_40" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">41</span> <span class="badge-blue">Digital</span> Memanfaatkan media interaktif/aplikasi digital untuk memperkaya pengalaman belajar.</p>
+                                    <textarea id="obs_41" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-blue overflow-hidden mb-3">
+                            <button onclick="toggleAccordion('acc-5')" class="w-full px-5 py-4 bg-gradient-to-r from-blue-50 to-white flex justify-between items-center text-left">
+                                <span class="font-bold text-sm text-blue-800"><i class="fas fa-flag-checkered mr-2"></i>V. KEGIATAN PENUTUP PEMBELAJARAN</span>
+                                <i class="fas fa-chevron-down text-blue-500"></i>
+                            </button>
+                            <div id="acc-5" class="accordion-content p-5 space-y-4">
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">42</span> Memfasilitasi murid membuat rangkuman/kesimpulan poin utama pembelajaran secara bersama.</p>
+                                    <textarea id="obs_42" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">43</span> Mendorong murid melakukan refleksi tentang perasaan dan keberhasilan belajar hari ini.</p>
+                                    <textarea id="obs_43" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">44</span> Memberikan umpan balik positif atas dinamika dan pencapaian kelas secara umum.</p>
+                                    <textarea id="obs_44" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">45</span> Melaksanakan asesmen formatif akhir untuk mengukur pencapaian tujuan pembelajaran.</p>
+                                    <textarea id="obs_45" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">46</span> Memberikan tugas pengayaan atau literasi tematik yang relevan dan tidak memberatkan.</p>
+                                    <textarea id="obs_46" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">47</span> Informasikan gambaran materi atau rencana kegiatan pada pertemuan berikutnya.</p>
+                                    <textarea id="obs_47" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">48</span> Menutup pembelajaran dengan pesan moral/motivasi (Power Closing).</p>
+                                    <textarea id="obs_48" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                                <div class="indicator-item border-b border-blue-50 pb-4">
+                                    <p class="text-sm font-medium text-gray-800 mb-2"><span class="badge-blue mr-1">49</span> Mengakhiri pembelajaran dengan doa dan salam penutup secara santun.</p>
+                                    <textarea id="obs_49" class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Catatan faktual..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button onclick="updateStatusSesi('pasca')" class="btn-primary mt-5 w-full text-white py-3 rounded-xl text-sm font-semibold">
+                            <i class="fas fa-arrow-right mr-1"></i> Lanjut ke Pasca-Observasi
+                        </button>
+                    </div>
+
+                    <!-- TAB PASCA-OBSERVASI -->
+                    <div id="content-pasca" class="tab-content hidden">
+                        <div class="card-blue p-5 mb-4">
+                            <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                <i class="fas fa-clipboard-check text-blue-600"></i> Rangkuman Catatan Faktual & Apresiasi
+                            </h3>
+                            <div class="space-y-3">
+                                <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg">
+                                    <label class="text-sm font-semibold text-green-800"><i class="fas fa-thumbs-up mr-1"></i> Apresiasi Praktik Baik</label>
+                                    <textarea id="pascaApresiasi" class="w-full text-sm border border-green-200 rounded-lg p-3 mt-2 bg-white" rows="2" placeholder="Momen positif..."></textarea>
+                                </div>
+                                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                                    <label class="text-sm font-semibold text-blue-800"><i class="fas fa-comments mr-1"></i> Area Fokus Diskusi Coaching</label>
+                                    <textarea id="pascaFokus" class="w-full text-sm border border-blue-200 rounded-lg p-3 mt-2 bg-white" rows="2" placeholder="Aspek spesifik untuk didiskusikan..."></textarea>
+                                </div>
+                                <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
+                                    <label class="text-sm font-semibold text-red-800"><i class="fas fa-exclamation-triangle mr-1"></i> Tantangan / Kendala Faktual</label>
+                                    <textarea id="pascaTantangan" class="w-full text-sm border border-red-200 rounded-lg p-3 mt-2 bg-white" rows="2" placeholder="Kendala teknis/materi..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-blue p-5 mb-4">
+                            <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                <i class="fas fa-question-circle text-blue-600"></i> Pertanyaan Refleksi
+                            </h3>
+                            <div class="space-y-3">
+                                <div class="border-l-4 border-blue-400 pl-4">
+                                    <label class="text-sm text-gray-700">1. Bagaimana perasaan Bapak/Ibu setelah pembelajaran hari ini?</label>
+                                    <textarea id="pascaRef1" class="w-full text-sm border border-blue-200 rounded-lg p-3 mt-2" rows="1"></textarea>
+                                </div>
+                                <div class="border-l-4 border-blue-400 pl-4">
+                                    <label class="text-sm text-gray-700">2. Bagian mana yang paling berhasil membuat murid belajar mendalam?</label>
+                                    <textarea id="pascaRef2" class="w-full text-sm border border-blue-200 rounded-lg p-3 mt-2" rows="1"></textarea>
+                                </div>
+                                <div class="border-l-4 border-blue-400 pl-4">
+                                    <label class="text-sm text-gray-700">3. Perbaikan apa yang ingin diterapkan jika mengajar materi ini kembali?</label>
+                                    <textarea id="pascaRef3" class="w-full text-sm border border-blue-200 rounded-lg p-3 mt-2" rows="1"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-blue p-5 mb-4">
+                            <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                <i class="fas fa-tasks text-blue-600"></i> Rencana Tindak Lanjut (RTL) dari Guru
+                            </h3>
+                            <div id="rtlViewObserver">
+                                <p class="text-xs text-gray-500 italic">Memuat data RTL...</p>
+                            </div>
+                        </div>
+
+                        <div class="card-blue p-5">
+                            <h3 class="font-bold text-gray-800 mb-6 flex items-center gap-2">
+                                <i class="fas fa-signature text-blue-600"></i> Lembar Pengesahan
+                            </h3>
+                            <div class="grid grid-cols-2 gap-6 text-center text-sm">
+                                <div>
+                                    <p class="text-gray-500 mb-10">Pendidik yang Diobservasi,</p>
+                                    <p class="font-semibold border-t-2 border-blue-300 pt-2 text-blue-800" id="ttdGuruNama">-</p>
+                                    <p class="text-xs text-gray-400" id="ttdGuruNip">NIP. -</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500 mb-10">Observer / Kepala Sekolah,</p>
+                                    <p class="font-semibold border-t-2 border-blue-300 pt-2 text-blue-800" id="ttdObserverNama">-</p>
+                                    <p class="text-xs text-gray-400" id="ttdObserverNip">NIP. -</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button onclick="selesaikanSesi()" class="mt-5 w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white py-3 rounded-xl text-sm font-semibold shadow-lg transition">
+                            <i class="fas fa-check-circle mr-1"></i> Selesaikan Sesi Supervisi
+                        </button>
+                        <button onclick="window.print()" class="mt-3 w-full bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white py-3 rounded-xl text-sm font-semibold shadow-lg transition no-print">
+                            <i class="fas fa-file-pdf mr-1"></i> Export ke PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KREDENSIAL -->
+            <div id="content-kredensial" class="menu-content hidden">
+                <h2 class="font-bold text-gray-800 text-lg mb-4">
+                    <i class="fas fa-key text-blue-600 mr-2"></i>Pengaturan Kredensial Login
+                </h2>
+                <p class="text-xs text-gray-500 mb-4">Ubah email dan password yang digunakan untuk login sebagai Observer (Kepala Sekolah).</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    
+                    <div class="card-blue p-5">
+                        <div class="flex items-center gap-2 mb-4">
+                            <div class="bg-blue-100 p-2 rounded-lg">
+                                <i class="fas fa-envelope text-blue-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-800 text-sm">Edit Email Login</h3>
+                                <p class="text-xs text-gray-500">Email yang digunakan untuk login</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-blue-50/50 p-3 rounded-lg mb-3">
+                            <p class="text-xs text-gray-500 mb-1">Email Saat Ini:</p>
+                            <p class="font-semibold text-sm text-gray-800 break-all" id="currentEmail">-</p>
+                        </div>
+
+                        <form id="formEditEmail" onsubmit="saveNewEmail(event)" class="space-y-3">
+                            <div>
+                                <label class="text-xs font-medium text-gray-600 mb-1 block">Email Baru *</label>
+                                <input type="email" id="newEmail" required class="w-full text-sm border border-blue-200 rounded-lg p-3" placeholder="email@sekolah.id">
+                            </div>
+                            <div>
+                                <label class="text-xs font-medium text-gray-600 mb-1 block">Konfirmasi Password Anda *</label>
+                                <input type="password" id="confirmPwEmail" required class="w-full text-sm border border-blue-200 rounded-lg p-3" placeholder="Masukkan password saat ini">
+                                <p class="text-xs text-gray-400 mt-1"><i class="fas fa-lock"></i> Untuk keamanan, masukkan password Anda saat ini</p>
+                            </div>
+                            <button type="submit" class="btn-primary w-full text-white py-3 rounded-xl text-sm font-semibold">
+                                <i class="fas fa-save mr-1"></i> Simpan Email Baru
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="card-blue p-5">
+                        <div class="flex items-center gap-2 mb-4">
+                            <div class="bg-orange-100 p-2 rounded-lg">
+                                <i class="fas fa-lock text-orange-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-800 text-sm">Edit Password Login</h3>
+                                <p class="text-xs text-gray-500">Ganti password secara berkala</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-orange-50/50 p-3 rounded-lg mb-3">
+                            <p class="text-xs text-gray-500 mb-1">Password Saat Ini:</p>
+                            <div class="flex items-center gap-2">
+                                <p class="font-mono text-sm text-gray-800 break-all" id="currentPassword">••••••••</p>
+                                <button type="button" onclick="toggleCurrentPassword()" class="text-gray-400 hover:text-orange-600">
+                                    <i class="fas fa-eye" id="toggleCurrentPwIcon"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <form id="formEditPassword" onsubmit="saveNewPassword(event)" class="space-y-3">
+                            <div>
+                                <label class="text-xs font-medium text-gray-600 mb-1 block">Password Lama *</label>
+                                <input type="password" id="oldPassword" required class="w-full text-sm border border-blue-200 rounded-lg p-3" placeholder="Masukkan password lama">
+                            </div>
+                            <div>
+                                <label class="text-xs font-medium text-gray-600 mb-1 block">Password Baru *</label>
+                                <input type="password" id="newPassword" required minlength="6" class="w-full text-sm border border-blue-200 rounded-lg p-3" placeholder="Minimal 6 karakter">
+                            </div>
+                            <div>
+                                <label class="text-xs font-medium text-gray-600 mb-1 block">Konfirmasi Password Baru *</label>
+                                <input type="password" id="confirmNewPassword" required minlength="6" class="w-full text-sm border border-blue-200 rounded-lg p-3" placeholder="Ulangi password baru">
+                            </div>
+                            <button type="submit" class="btn-orange w-full text-white py-3 rounded-xl text-sm font-semibold">
+                                <i class="fas fa-key mr-1"></i> Ganti Password
+                            </button>
+                        </form>
+                    </div>
+
+                </div>
+
+                <div class="card-blue p-5 mt-5">
+                    <h3 class="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                        <i class="fas fa-shield-alt text-blue-600"></i> Tips Keamanan
+                    </h3>
+                    <ul class="text-xs text-gray-600 space-y-2">
+                        <li><i class="fas fa-check-circle text-green-500 mr-1"></i> Gunakan password minimal <strong>8 karakter</strong> kombinasi huruf, angka, dan simbol.</li>
+                        <li><i class="fas fa-check-circle text-green-500 mr-1"></i> Ganti password secara <strong>berkala</strong> (misal setiap 3 bulan).</li>
+                        <li><i class="fas fa-check-circle text-green-500 mr-1"></i> Jangan bagikan password ke siapa pun, termasuk rekan sejawat.</li>
+                        <li><i class="fas fa-check-circle text-green-500 mr-1"></i> Jika lupa password, hubungi pengembang atau admin sistem.</li>
+                    </ul>
+                </div>
+            </div>
+
+        </main>
+
+        <footer class="fixed bottom-0 w-full bg-white/90 backdrop-blur border-t border-blue-100 p-3 text-center text-xs text-blue-400 no-print">
+            <p>Dokumen Pembinaan Pendidik Baru | SMP Negeri 1 Maiwa</p>
+            <p class="mt-1">Dikembangkan oleh: <span class="text-blue-600 font-semibold">Darmawati, S.Pd., M.Pd.</span> — Guru SMPN 1 Anggeraja</p>
+        </footer>
+    </div>
+
+    <!-- ================= MAIN APP GURU ================= -->
+    <div id="mainAppGuru" class="hidden-screen">
+        
+        <header class="header-gradient shadow-lg sticky top-0 z-50 no-print">
+            <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
+                        <i class="fas fa-user-graduate text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-white text-sm md:text-base leading-tight">Portal Guru</h1>
+                        <p class="text-blue-100 text-xs">Supervisi Coaching - SMPN 1 Maiwa</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="bg-white/20 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full font-medium hidden md:inline">
+                        <i class="fas fa-user mr-1"></i> <span id="headerGuruName">Guru</span>
+                    </span>
+                    <button onclick="handleLogout()" class="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-2 rounded-lg transition" title="Logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-4xl mx-auto p-4 mb-24">
+            
+            <div class="flex border-b-2 border-blue-100 mb-5 no-print overflow-x-auto gap-1">
+                <button onclick="switchGuruMenu('identitas')" id="gmenu-identitas" class="px-5 py-3 text-sm tab-active whitespace-nowrap transition-all">
+                    <i class="fas fa-id-card mr-1"></i> Identitas (Form A)
+                </button>
+                <button onclick="switchGuruMenu('rtl')" id="gmenu-rtl" class="px-5 py-3 text-sm tab-inactive whitespace-nowrap transition-all">
+                    <i class="fas fa-tasks mr-1"></i> Rencana Tindak Lanjut
+                </button>
+            </div>
+
+            <div id="gcontent-identitas" class="gmenu-content">
+                <div class="card-blue p-5 mb-4">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="bg-blue-100 p-2 rounded-lg"><i class="fas fa-id-card text-blue-600"></i></div>
+                        <div>
+                            <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Form A: Identitas & Kesepakatan</h2>
+                            <p class="text-xs text-gray-500">Isi data identitas Anda untuk sesi supervisi</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-3 rounded-r-lg mb-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs text-gray-500 mb-1">Username Login Anda:</p>
+                                <p class="username-badge" id="guruUsernameBadge">-</p>
+                            </div>
+                            <i class="fas fa-user-circle text-blue-300 text-3xl"></i>
+                        </div>
+                    </div>
+
+                    <form id="formA" onsubmit="saveFormA(event)" class="space-y-3">
+                        <div>
+                            <label class="text-xs font-medium text-gray-600 mb-1 block">Nama Pendidik *</label>
+                            <input type="text" id="faNama" required class="w-full text-sm border border-blue-200 rounded-lg p-3 bg-gray-50">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-xs font-medium text-gray-600 mb-1 block">NIP</label>
+                                <input type="text" id="faNip" class="w-full text-sm border border-blue-200 rounded-lg p-3" placeholder="19800101 200501 1 001">
+                            </div>
+                            <div>
+                                <label class="text-xs font-medium text-gray-600 mb-1 block">Mata Pelajaran *</label>
+                                <input type="text" id="faMapel" required class="w-full text-sm border border-blue-200 rounded-lg p-3" placeholder="Matematika">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-xs font-medium text-gray-600 mb-1 block">Kelas / Semester *</label>
+                                <input type="text" id="faKelas" required class="w-full text-sm border border-blue-200 rounded-lg p-3" placeholder="VIII / Ganjil">
+                            </div>
+                            <div>
+                                <label class="text-xs font-medium text-gray-600 mb-1 block">Materi / Topik</label>
+                                <input type="text" id="faMateri" class="w-full text-sm border border-blue-200 rounded-lg p-3" placeholder="Persamaan Linear">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-xs font-medium text-gray-600 mb-1 block">Hari / Tanggal Pra-Obs</label>
+                                <input type="date" id="faTanggal" class="w-full text-sm border border-blue-200 rounded-lg p-3">
+                            </div>
+                            <div>
+                                <label class="text-xs font-medium text-gray-600 mb-1 block">Alokasi Waktu</label>
+                                <input type="text" id="faAlokasi" class="w-full text-sm border border-blue-200 rounded-lg p-3" placeholder="2 x 40 menit">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-gray-600 mb-1 block">Jadwal Observasi Kelas</label>
+                            <input type="text" id="faJadwal" class="w-full text-sm border border-blue-200 rounded-lg p-3" placeholder="Senin, 10:00 - 11:20 WITA">
+                        </div>
+                        <div class="bg-blue-50/50 p-3 rounded-lg">
+                            <label class="text-xs font-medium text-gray-600 mb-1 block">Observer / Kepala Sekolah</label>
+                            <input type="text" id="faObserver" class="w-full text-sm border border-blue-200 rounded-lg p-3 bg-white" readonly>
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-gray-600 mb-1 block">Fokus Utama Coaching</label>
+                            <input type="text" id="faFokus" value="Pembelajaran Mendalam (Deep Learning)" class="w-full text-sm border border-blue-200 rounded-lg p-3">
+                        </div>
+                        <button type="submit" class="btn-primary w-full text-white py-3 rounded-xl text-sm font-semibold">
+                            <i class="fas fa-save mr-1"></i> Simpan Identitas
+                        </button>
+                    </form>
+                </div>
+
+                <div class="card-blue p-5">
+                    <h3 class="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                        <i class="fas fa-info-circle text-blue-600"></i> Status Sesi Supervisi
+                    </h3>
+                    <div id="guruStatusInfo" class="text-sm"></div>
+                </div>
+            </div>
+
+            <div id="gcontent-rtl" class="gmenu-content hidden">
+                <div class="card-blue p-5 mb-4">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="bg-green-100 p-2 rounded-lg"><i class="fas fa-tasks text-green-600"></i></div>
+                        <div>
+                            <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Rencana Tindak Lanjut (RTL)</h2>
+                            <p class="text-xs text-gray-500">Isi rencana pengembangan Anda setelah sesi supervisi</p>
+                        </div>
+                    </div>
+
+                    <div id="rtlInfoGuru" class="bg-blue-50 border-l-4 border-blue-500 p-3 rounded-r-lg mb-4 text-xs text-blue-800">
+                        <i class="fas fa-info-circle mr-1"></i> RTL diisi setelah sesi Pasca-Observasi selesai.
+                    </div>
+
+                    <form id="formRTL" onsubmit="saveRTL(event)" class="space-y-3">
+                        <div>
+                            <label class="text-xs font-medium text-gray-600 mb-1 block">Area Pengembangan *</label>
+                            <textarea id="rtlArea" required class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Contoh: Pemberian umpan balik yang lebih spesifik"></textarea>
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-gray-600 mb-1 block">Bentuk Pendampingan *</label>
+                            <select id="rtlBentuk" required class="w-full text-sm border border-blue-200 rounded-lg p-3">
+                                <option value="">-- Pilih --</option>
+                                <option value="Coaching">Coaching</option>
+                                <option value="Mentoring">Mentoring</option>
+                                <option value="Modeling">Modeling</option>
+                                <option value="Pelatihan Mandiri">Pelatihan Mandiri</option>
+                                <option value="Observasi Rekan Sejawat">Observasi Rekan Sejawat</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-gray-600 mb-1 block">Aktivitas / Langkah Nyata *</label>
+                            <textarea id="rtlAktivitas" required class="w-full text-sm border border-blue-200 rounded-lg p-3" rows="2" placeholder="Contoh: Menerapkan teknik bertanya HOTS di 3 pertemuan berikutnya"></textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-xs font-medium text-gray-600 mb-1 block">Lini Waktu & Target *</label>
+                                <input type="text" id="rtlWaktu" required class="w-full text-sm border border-blue-200 rounded-lg p-3" placeholder="Contoh: 2 minggu">
+                            </div>
+                            <div>
+                                <label class="text-xs font-medium text-gray-600 mb-1 block">Ukuran Keberhasilan *</label>
+                                <input type="text" id="rtlUkuran" required class="w-full text-sm border border-blue-200 rounded-lg p-3" placeholder="Contoh: 80% murid aktif bertanya">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-green w-full text-white py-3 rounded-xl text-sm font-semibold">
+                            <i class="fas fa-save mr-1"></i> Simpan RTL
+                        </button>
+                    </form>
+                </div>
+
+                <div class="card-blue p-5">
+                    <h3 class="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                        <i class="fas fa-list-check text-blue-600"></i> RTL Tersimpan
+                    </h3>
+                    <div id="rtlListGuru" class="space-y-3"></div>
+                </div>
+            </div>
+
+        </main>
+
+        <footer class="fixed bottom-0 w-full bg-white/90 backdrop-blur border-t border-blue-100 p-3 text-center text-xs text-blue-400 no-print">
+            <p>Portal Guru | SMP Negeri 1 Maiwa</p>
+            <p class="mt-1">Dikembangkan oleh: <span class="text-blue-600 font-semibold">Darmawati, S.Pd., M.Pd.</span> — Guru SMPN 1 Anggeraja</p>
+        </footer>
+    </div>
+
+    <!-- ================= MODAL: TAMBAH/EDIT AKUN GURU ================= -->
+    <div id="guruModal" class="modal-overlay">
+        <div class="modal-content p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-gray-800 text-lg" id="guruModalTitle"><i class="fas fa-user-plus text-blue-600 mr-2"></i>Tambah Akun Guru</h3>
+                <button onclick="closeModal('guruModal')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-3 rounded-r-lg mb-4 text-xs text-blue-800">
+                <i class="fas fa-info-circle mr-1"></i> Cukup isi <strong>Nama</strong> dan <strong>PIN</strong>. <strong>Username</strong> akan di-generate otomatis dari nama (huruf kecil, tanpa spasi & gelar).
+            </div>
+
+            <form id="guruForm" onsubmit="saveGuru(event)" class="space-y-3">
+                <input type="hidden" id="guruId">
+                <div>
+                    <label class="text-xs font-medium text-gray-600 mb-1 block">Nama Pendidik *</label>
+                    <input type="text" id="guruNama" required class="w-full text-sm border border-blue-200 rounded-lg p-3" placeholder="Contoh: Budi Santoso, S.Pd." oninput="previewUsername()">
+                </div>
+                
+                <div class="bg-gradient-to-r from-blue-50 to-white border border-blue-200 rounded-lg p-3">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500 mb-1"><i class="fas fa-at mr-1"></i> Username Otomatis:</p>
+                            <p class="username-badge" id="usernamePreview">-</p>
+                        </div>
+                        <i class="fas fa-magic text-blue-300 text-xl"></i>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="text-xs font-medium text-gray-600">PIN (6 digit) *</label>
+                        <button type="button" onclick="generatePin()" class="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                            <i class="fas fa-sync-alt mr-1"></i> Generate PIN
+                        </button>
+                    </div>
+                    <input type="text" id="guruPin" maxlength="6" required pattern="[0-9]{6}" class="w-full text-sm border border-blue-200 rounded-lg p-3 tracking-widest font-mono text-center text-lg" placeholder="••••••">
+                    <p class="text-xs text-gray-400 mt-1"><i class="fas fa-info-circle"></i> PIN ini digunakan guru untuk login bersama username.</p>
+                </div>
+
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeModal('guruModal')" class="flex-1 border border-gray-300 text-gray-600 py-3 rounded-xl text-sm font-semibold hover:bg-gray-50">Batal</button>
+                    <button type="submit" class="btn-primary flex-1 text-white py-3 rounded-xl text-sm font-semibold"><i class="fas fa-save mr-1"></i> Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: EDIT OBSERVER ================= -->
+    <div id="observerModal" class="modal-overlay">
+        <div class="modal-content p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-gray-800 text-lg"><i class="fas fa-user-tie text-blue-600 mr-2"></i>Data Observer</h3>
+                <button onclick="closeModal('observerModal')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="observerForm" onsubmit="saveObserver(event)" class="space-y-3">
+                <div>
+                    <label class="text-xs font-medium text-gray-600 mb-1 block">Nama Kepala Sekolah *</label>
+                    <input type="text" id="obsNama" required class="w-full text-sm border border-blue-200 rounded-lg p-3" placeholder="Drs. H. Ahmad, M.Pd.">
+                </div>
+                <div>
+                    <label class="text-xs font-medium text-gray-600 mb-1 block">NIP</label>
+                    <input type="text" id="obsNip" class="w-full text-sm border border-blue-200 rounded-lg p-3" placeholder="19700101 199501 1 001">
+                </div>
+                <div>
+                    <label class="text-xs font-medium text-gray-600 mb-1 block">Satuan Pendidikan</label>
+                    <input type="text" id="obsSekolah" value="SMP Negeri 1 Maiwa" class="w-full text-sm border border-blue-200 rounded-lg p-3">
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeModal('observerModal')" class="flex-1 border border-gray-300 text-gray-600 py-3 rounded-xl text-sm font-semibold hover:bg-gray-50">Batal</button>
+                    <button type="submit" class="btn-primary flex-1 text-white py-3 rounded-xl text-sm font-semibold"><i class="fas fa-save mr-1"></i> Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: LIHAT KREDENSIAL GURU ================= -->
+    <div id="pinModal" class="modal-overlay">
+        <div class="modal-content p-6 max-w-sm">
+            <div class="text-center">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-2xl mb-3">
+                    <i class="fas fa-key text-blue-600 text-2xl"></i>
+                </div>
+                <h3 class="font-bold text-gray-800 text-lg mb-1" id="pinModalNama">Nama Guru</h3>
+                <p class="text-xs text-gray-500 mb-4">Kredensial Login Guru</p>
+                
+                <div class="bg-gradient-to-br from-blue-50 to-white border-2 border-blue-200 rounded-xl p-4 mb-3">
+                    <p class="text-xs text-gray-500 mb-1"><i class="fas fa-at mr-1"></i> Username</p>
+                    <p class="text-lg font-mono tracking-wide font-bold text-blue-700" id="pinModalUsername">-</p>
+                </div>
+                
+                <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl p-5 mb-4">
+                    <p class="text-xs text-blue-100 mb-1"><i class="fas fa-key mr-1"></i> PIN</p>
+                    <p class="text-white text-3xl font-mono tracking-widest font-bold" id="pinModalValue">••••••</p>
+                </div>
+                
+                <p class="text-xs text-gray-500 mb-4"><i class="fas fa-info-circle"></i> Berikan username & PIN ini kepada guru untuk login di Portal Guru.</p>
+                <button onclick="closeModal('pinModal')" class="btn-primary w-full text-white py-3 rounded-xl text-sm font-semibold">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // 🔧 KONFIGURASI SUPABASE
+        // ============================================================
+        const SUPABASE_URL = 'https://qfpzvkavxaiuknvrawnj.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmcHp2a2F2eGFpdWtudnJhd25qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyNjM4MjQsImV4cCI6MjEwNjgzOTgyNH0.2DsViXO_m6HEKYmOsrCFGUGhTL4VUqDoXuQVfSXp7Pc'; // GANTI DENGAN KEY LENGKAP
+        
+        const { createClient } = supabase;
+        const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // ============================================================
+        // STATE MANAGEMENT
+        // ============================================================
+        let currentSesiId = null;
+        let currentFilter = 'all';
+        let currentUser = null;
+        let currentGuruList = [];
+        let currentObserver = null;
+        
+        // ============================================================
+        // UI HELPERS
+        // ============================================================
+        function showLoading() { document.getElementById('loadingOverlay').classList.add('active'); }
+        function hideLoading() { document.getElementById('loadingOverlay').classList.remove('active'); }
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // ============================================================
+        // UTILITY: GENERATE USERNAME
+        // ============================================================
+        function generateUsername(nama) {
+            if (!nama) return '';
+            let cleaned = nama;
+            const commaIndex = cleaned.indexOf(',');
+            if (commaIndex > 0) cleaned = cleaned.substring(0, commaIndex);
+            cleaned = cleaned.replace(/\s+[A-Za-z](\.[A-Za-z]+)+\.?/g, '');
+            cleaned = cleaned.replace(/\b(Dr|Drs|Ir|Hj|H|Prof|Doktor|Magister|Sarjana)\b\.?\s*/gi, '');
+            cleaned = cleaned.replace(/[^a-zA-Z0-9]/g, '');
+            cleaned = cleaned.toLowerCase();
+            return cleaned;
+        }
+
+        function previewUsername() {
+            const nama = document.getElementById('guruNama').value;
+            const username = generateUsername(nama);
+            document.getElementById('usernamePreview').textContent = username || '-';
+        }
+
+        // ============================================================
+        // AUTH
+        // ============================================================
+        function switchLoginRole(role) {
+            document.getElementById('roleBtnObserver').classList.toggle('active', role === 'observer');
+            document.getElementById('roleBtnObserver').classList.toggle('inactive', role !== 'observer');
+            document.getElementById('roleBtnGuru').classList.toggle('active', role === 'guru');
+            document.getElementById('roleBtnGuru').classList.toggle('inactive', role !== 'guru');
+            document.getElementById('loginFormObserver').classList.toggle('hidden', role !== 'observer');
+            document.getElementById('loginFormGuru').classList.toggle('hidden', role !== 'guru');
+        }
+
+        // ============================================================
+        // HANDLE LOGIN OBSERVER — WITH FALLBACK
+        // ============================================================
+        async function handleLoginObserver() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!email || !password) {
+                showToast('Email dan password harus diisi!', 'error');
+                return;
+            }
+            
+            showLoading();
+            try {
+                // Coba query ke Supabase
+                const { data, error } = await _supabase
+                    .from('observer')
+                    .select('*');
+                
+                if (error) throw error;
+                
+                // Cari observer yang cocok
+                let observer = null;
+                if (data && data.length > 0) {
+                    observer = data.find(o => 
+                        (o.email && o.email.toLowerCase() === email.toLowerCase()) &&
+                        o.password === password
+                    );
+                    
+                    // Kalau ada observer di DB tapi email/password-nya null,
+                    // cek apakah ini observer pertama dan cocokkan dengan default
+                    if (!observer && data.length > 0) {
+                        observer = data.find(o => 
+                            (!o.email || o.email === '') && 
+                            (!o.password || o.password === '') &&
+                            email === 'kepsek@smpn1maiwa.sch.id' && 
+                            password === 'admin123'
+                        );
+                        
+                        // Kalau ketemu, update otomatis dengan email & password default
+                        if (observer) {
+                            await _supabase
+                                .from('observer')
+                                .update({ email: email, password: password })
+                                .eq('id', observer.id);
+                            observer.email = email;
+                            observer.password = password;
+                        }
+                    }
+                }
+                
+                // FALLBACK: Kalau Supabase kosong / tidak ada yang cocok,
+                // cek kredensial default (untuk kasus pertama kali setup)
+                if (!observer && email === 'kepsek@smpn1maiwa.sch.id' && password === 'admin123') {
+                    // Coba insert observer default
+                    const { data: inserted, error: insertErr } = await _supabase
+                        .from('observer')
+                        .insert({
+                            nama: 'Drs. H. Ahmad, M.Pd.',
+                            nip: '19700101 199501 1 001',
+                            sekolah: 'SMP Negeri 1 Maiwa',
+                            email: 'kepsek@smpn1maiwa.sch.id',
+                            password: 'admin123'
+                        })
+                        .select()
+                        .single();
+                    
+                    if (!insertErr && inserted) {
+                        observer = inserted;
+                    } else {
+                        // Kalau insert gagal (misal RLS), tetap login dengan data lokal
+                        observer = {
+                            id: 'local-default',
+                            nama: 'Drs. H. Ahmad, M.Pd.',
+                            nip: '19700101 199501 1 001',
+                            sekolah: 'SMP Negeri 1 Maiwa',
+                            email: 'kepsek@smpn1maiwa.sch.id',
+                            password: 'admin123'
+                        };
+                    }
+                }
+                
+                if (observer) {
+                    const auth = { email: observer.email, role: 'observer', loginAt: Date.now(), nama: observer.nama };
+                    localStorage.setItem('supervisi_auth', JSON.stringify(auth));
+                    currentUser = auth;
+                    currentObserver = observer;
+                    showMainApp('observer');
+                } else {
+                    showToast('Email atau password salah!', 'error');
+                }
+            } catch (err) {
+                console.error('Login error:', err);
+                
+                // FALLBACK TERAKHIR: kalau Supabase error total, cek default
+                if (email === 'kepsek@smpn1maiwa.sch.id' && password === 'admin123') {
+                    const observer = {
+                        id: 'local-default',
+                        nama: 'Drs. H. Ahmad, M.Pd.',
+                        nip: '19700101 199501 1 001',
+                        sekolah: 'SMP Negeri 1 Maiwa',
+                        email: 'kepsek@smpn1maiwa.sch.id',
+                        password: 'admin123'
+                    };
+                    const auth = { email: observer.email, role: 'observer', loginAt: Date.now(), nama: observer.nama };
+                    localStorage.setItem('supervisi_auth', JSON.stringify(auth));
+                    currentUser = auth;
+                    currentObserver = observer;
+                    showMainApp('observer');
+                } else {
+                    showToast('Gagal login: ' + err.message, 'error');
+                }
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function handleLoginGuru() {
+            const input = document.getElementById('loginGuruNama').value.trim();
+            const pin = document.getElementById('loginGuruPin').value.trim();
+            
+            if (!input || !pin) { showToast('Username dan PIN harus diisi!', 'error'); return; }
+            
+            showLoading();
+            const inputLower = input.toLowerCase();
+            
+            try {
+                const { data, error } = await _supabase.from('guru').select('*').eq('pin', pin);
+                if (error) throw error;
+                
+                const guru = (data || []).find(g => 
+                    (g.username && g.username.toLowerCase() === inputLower) ||
+                    (g.nama && g.nama.toLowerCase() === inputLower)
+                );
+                
+                if (guru) {
+                    const auth = { role: 'guru', guruId: guru.id, nama: guru.nama, username: guru.username, loginAt: Date.now() };
+                    localStorage.setItem('supervisi_auth', JSON.stringify(auth));
+                    currentUser = auth;
+                    showMainApp('guru');
+                } else {
+                    showToast('Username atau PIN salah!', 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Gagal login: ' + err.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function showMainApp(role) {
+            document.getElementById('loginScreen').classList.add('hidden-screen');
+            document.getElementById('mainApp').classList.add('hidden-screen');
+            document.getElementById('mainAppGuru').classList.add('hidden-screen');
+            
+            if (role === 'observer') {
+                document.getElementById('mainApp').classList.remove('hidden-screen');
+                initApp();
+            } else if (role === 'guru') {
+                document.getElementById('mainAppGuru').classList.remove('hidden-screen');
+                initGuruApp();
+            }
+        }
+
+        function handleLogout() {
+            if (confirm('Yakin ingin keluar?')) {
+                localStorage.removeItem('supervisi_auth');
+                location.reload();
+            }
+        }
+
+        function checkAuth() {
+            const auth = localStorage.getItem('supervisi_auth');
+            if (auth) {
+                const parsed = JSON.parse(auth);
+                currentUser = parsed;
+                showMainApp(parsed.role);
+            }
+        }
+
+        // ============================================================
+        // INIT APP OBSERVER
+        // ============================================================
+        async function initApp() {
+            await loadObserver();
+            await refreshGuruList();
+        }
+
+        async function refreshGuruList() {
+            showLoading();
+            try {
+                const { data, error } = await _supabase
+                    .from('guru')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                currentGuruList = data || [];
+                renderGuruList();
+                renderRekapList();
+                updateStats();
+                populateSelectGuru();
+            } catch (err) {
+                console.error(err);
+                showToast('Gagal memuat data guru: ' + err.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // ============================================================
+        // OBSERVER — WITH FALLBACK
+        // ============================================================
+        async function loadObserver() {
+            try {
+                let { data, error } = await _supabase
+                    .from('observer')
+                    .select('*')
+                    .limit(1)
+                    .maybeSingle();
+                
+                // Kalau error karena kolom email/password belum ada, fallback
+                if (error && error.code !== 'PGRST116') {
+                    console.warn('Query observer error, pakai fallback:', error.message);
+                    currentObserver = {
+                        nama: 'Drs. H. Ahmad, M.Pd.',
+                        nip: '19700101 199501 1 001',
+                        sekolah: 'SMP Negeri 1 Maiwa',
+                        email: 'kepsek@smpn1maiwa.sch.id',
+                        password: 'admin123'
+                    };
+                    renderObserverInfo();
+                    renderKredensialInfo();
+                    return;
+                }
+                
+                // Kalau belum ada data observer, buat default
+                if (!data) {
+                    const defaultObserver = {
+                        nama: 'Drs. H. Ahmad, M.Pd.',
+                        nip: '19700101 199501 1 001',
+                        sekolah: 'SMP Negeri 1 Maiwa',
+                        email: 'kepsek@smpn1maiwa.sch.id',
+                        password: 'admin123'
+                    };
+                    const { data: inserted, error: insertErr } = await _supabase
+                        .from('observer')
+                        .insert(defaultObserver)
+                        .select()
+                        .single();
+                    
+                    if (insertErr) {
+                        console.warn('Insert observer gagal, pakai fallback:', insertErr.message);
+                        currentObserver = defaultObserver;
+                    } else {
+                        data = inserted;
+                        currentObserver = data;
+                    }
+                } else {
+                    currentObserver = data;
+                }
+                
+                renderObserverInfo();
+                renderKredensialInfo();
+            } catch (err) {
+                console.error('Error loading observer:', err);
+                currentObserver = {
+                    nama: 'Drs. H. Ahmad, M.Pd.',
+                    nip: '19700101 199501 1 001',
+                    sekolah: 'SMP Negeri 1 Maiwa',
+                    email: 'kepsek@smpn1maiwa.sch.id',
+                    password: 'admin123'
+                };
+                renderObserverInfo();
+                renderKredensialInfo();
+            }
+        }
+
+        function renderObserverInfo() {
+            if (!currentObserver) return;
+            const obs = currentObserver;
+            document.getElementById('observerInfo').innerHTML = `
+                <div class="bg-blue-50/50 p-3 rounded-lg">
+                    <span class="text-gray-500 text-xs block mb-1">Nama</span>
+                    <span class="font-semibold text-gray-800">${obs.nama}</span>
+                </div>
+                <div class="bg-blue-50/50 p-3 rounded-lg">
+                    <span class="text-gray-500 text-xs block mb-1">NIP</span>
+                    <span class="font-semibold text-gray-800">${obs.nip || '-'}</span>
+                </div>
+                <div class="bg-blue-50/50 p-3 rounded-lg col-span-2">
+                    <span class="text-gray-500 text-xs block mb-1">Satuan Pendidikan</span>
+                    <span class="font-semibold text-gray-800">${obs.sekolah}</span>
+                </div>
+            `;
+            document.getElementById('headerUser').textContent = obs.nama;
+        }
+
+        function renderKredensialInfo() {
+            if (!currentObserver) return;
+            document.getElementById('currentEmail').textContent = currentObserver.email || '-';
+            document.getElementById('currentPassword').textContent = currentObserver.password || '-';
+        }
+
+        function openObserverModal() {
+            if (currentObserver) {
+                document.getElementById('obsNama').value = currentObserver.nama || '';
+                document.getElementById('obsNip').value = currentObserver.nip || '';
+                document.getElementById('obsSekolah').value = currentObserver.sekolah || '';
+            }
+            document.getElementById('observerModal').classList.add('active');
+        }
+        
+        async function saveObserver(e) {
+            e.preventDefault();
+            showLoading();
+            
+            const payload = {
+                nama: document.getElementById('obsNama').value,
+                nip: document.getElementById('obsNip').value,
+                sekolah: document.getElementById('obsSekolah').value
+            };
+            
+            try {
+                if (currentObserver && currentObserver.id && currentObserver.id !== 'local-default') {
+                    const { error } = await _supabase.from('observer').update(payload).eq('id', currentObserver.id);
+                    if (error) throw error;
+                } else {
+                    const { error } = await _supabase.from('observer').insert(payload);
+                    if (error) throw error;
+                }
+                
+                await loadObserver();
+                closeModal('observerModal');
+                showToast('Data observer berhasil disimpan!', 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('Gagal menyimpan: ' + err.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // ============================================================
+        // EDIT EMAIL & PASSWORD OBSERVER
+        // ============================================================
+        function toggleCurrentPassword() {
+            const el = document.getElementById('currentPassword');
+            const icon = document.getElementById('toggleCurrentPwIcon');
+            const real = currentObserver?.password || '-';
+            
+            if (el.dataset.visible === 'true') {
+                el.textContent = '••••••••';
+                el.dataset.visible = 'false';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            } else {
+                el.textContent = real;
+                el.dataset.visible = 'true';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            }
+        }
+
+        async function saveNewEmail(e) {
+            e.preventDefault();
+            if (!currentObserver) return;
+            
+            const newEmail = document.getElementById('newEmail').value.trim();
+            const confirmPw = document.getElementById('confirmPwEmail').value;
+            
+            if (confirmPw !== currentObserver.password) {
+                showToast('Password konfirmasi salah!', 'error');
+                return;
+            }
+            
+            if (newEmail === currentObserver.email) {
+                showToast('Email baru sama dengan email lama.', 'info');
+                return;
+            }
+            
+            showLoading();
+            try {
+                if (currentObserver.id && currentObserver.id !== 'local-default') {
+                    const { error } = await _supabase
+                        .from('observer')
+                        .update({ email: newEmail })
+                        .eq('id', currentObserver.id);
+                    if (error) throw error;
+                } else {
+                    const { error } = await _supabase
+                        .from('observer')
+                        .insert({
+                            nama: currentObserver.nama,
+                            nip: currentObserver.nip,
+                            sekolah: currentObserver.sekolah,
+                            email: newEmail,
+                            password: currentObserver.password
+                        });
+                    if (error) throw error;
+                }
+                
+                currentObserver.email = newEmail;
+                const auth = JSON.parse(localStorage.getItem('supervisi_auth'));
+                if (auth) { auth.email = newEmail; localStorage.setItem('supervisi_auth', JSON.stringify(auth)); }
+                
+                await loadObserver();
+                document.getElementById('formEditEmail').reset();
+                showToast('✅ Email berhasil diperbarui!', 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('Gagal menyimpan email: ' + err.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function saveNewPassword(e) {
+            e.preventDefault();
+            if (!currentObserver) return;
+            
+            const oldPw = document.getElementById('oldPassword').value;
+            const newPw = document.getElementById('newPassword').value;
+            const confirmPw = document.getElementById('confirmNewPassword').value;
+            
+            if (oldPw !== currentObserver.password) {
+                showToast('Password lama salah!', 'error');
+                return;
+            }
+            
+            if (newPw !== confirmPw) {
+                showToast('Konfirmasi password baru tidak cocok!', 'error');
+                return;
+            }
+            
+            if (newPw.length < 6) {
+                showToast('Password baru minimal 6 karakter!', 'error');
+                return;
+            }
+            
+            showLoading();
+            try {
+                if (currentObserver.id && currentObserver.id !== 'local-default') {
+                    const { error } = await _supabase
+                        .from('observer')
+                        .update({ password: newPw })
+                        .eq('id', currentObserver.id);
+                    if (error) throw error;
+                } else {
+                    const { error } = await _supabase
+                        .from('observer')
+                        .insert({
+                            nama: currentObserver.nama,
+                            nip: currentObserver.nip,
+                            sekolah: currentObserver.sekolah,
+                            email: currentObserver.email,
+                            password: newPw
+                        });
+                    if (error) throw error;
+                }
+                
+                currentObserver.password = newPw;
+                await loadObserver();
+                document.getElementById('formEditPassword').reset();
+                showToast('✅ Password berhasil diganti!', 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('Gagal mengganti password: ' + err.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // ============================================================
+        // GURU CRUD
+        // ============================================================
+        function generatePin() {
+            const pin = Math.floor(100000 + Math.random() * 900000).toString();
+            document.getElementById('guruPin').value = pin;
+        }
+
+        function openGuruModal(id = null) {
+            const modal = document.getElementById('guruModal');
+            const title = document.getElementById('guruModalTitle');
+            const form = document.getElementById('guruForm');
+            
+            if (id) {
+                const guru = currentGuruList.find(g => g.id === id);
+                if (guru) {
+                    title.innerHTML = '<i class="fas fa-user-edit text-blue-600 mr-2"></i>Edit Akun Guru';
+                    document.getElementById('guruId').value = guru.id;
+                    document.getElementById('guruNama').value = guru.nama;
+                    document.getElementById('guruPin').value = guru.pin || '';
+                    const username = guru.username || generateUsername(guru.nama);
+                    document.getElementById('usernamePreview').textContent = username;
+                }
+            } else {
+                title.innerHTML = '<i class="fas fa-user-plus text-blue-600 mr-2"></i>Tambah Akun Guru';
+                form.reset();
+                document.getElementById('guruId').value = '';
+                document.getElementById('usernamePreview').textContent = '-';
+                generatePin();
+            }
+            modal.classList.add('active');
+        }
+
+        async function saveGuru(e) {
+            e.preventDefault();
+            const id = document.getElementById('guruId').value;
+            const namaBaru = document.getElementById('guruNama').value.trim();
+            const usernameBaru = generateUsername(namaBaru);
+            const pinBaru = document.getElementById('guruPin').value;
+            
+            if (!usernameBaru) { showToast('Username tidak dapat di-generate dari nama ini.', 'error'); return; }
+            
+            const duplikatUsername = currentGuruList.find(g => g.username === usernameBaru && g.id !== id);
+            if (duplikatUsername) {
+                showToast(`Username "${usernameBaru}" sudah dipakai oleh ${duplikatUsername.nama}`, 'error');
+                return;
+            }
+            
+            showLoading();
+            try {
+                if (id) {
+                    const { error } = await _supabase
+                        .from('guru')
+                        .update({ nama: namaBaru, username: usernameBaru, pin: pinBaru })
+                        .eq('id', id);
+                    if (error) throw error;
+                    showToast('Data akun guru berhasil diperbarui!', 'success');
+                } else {
+                    const { data, error } = await _supabase
+                        .from('guru')
+                        .insert({ nama: namaBaru, username: usernameBaru, pin: pinBaru, status: 'pra', form_a: {} })
+                        .select()
+                        .single();
+                    if (error) throw error;
+                    window._newGuruId = data.id;
+                }
+                
+                closeModal('guruModal');
+                await refreshGuruList();
+                
+                if (!id) setTimeout(() => showPinModal(window._newGuruId), 300);
+            } catch (err) {
+                console.error(err);
+                showToast('Gagal menyimpan: ' + err.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function showPinModal(guruId) {
+            const guru = currentGuruList.find(g => g.id === guruId);
+            if (!guru) return;
+            document.getElementById('pinModalNama').textContent = guru.nama;
+            document.getElementById('pinModalUsername').textContent = guru.username || generateUsername(guru.nama);
+            document.getElementById('pinModalValue').textContent = guru.pin;
+            document.getElementById('pinModal').classList.add('active');
+        }
+
+        async function deleteGuru(id) {
+            if (!confirm('Yakin ingin menghapus akun guru ini? Semua data terkait juga akan terhapus.')) return;
+            showLoading();
+            try {
+                const { error } = await _supabase.from('guru').delete().eq('id', id);
+                if (error) throw error;
+                showToast('Akun guru berhasil dihapus.', 'success');
+                await refreshGuruList();
+            } catch (err) {
+                console.error(err);
+                showToast('Gagal menghapus: ' + err.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function renderGuruList() {
+            const container = document.getElementById('guruList');
+            
+            if (currentGuruList.length === 0) {
+                container.innerHTML = `
+                    <div class="card-blue p-8 text-center">
+                        <i class="fas fa-user-slash text-gray-300 text-4xl mb-3"></i>
+                        <p class="text-gray-500 text-sm">Belum ada akun guru. Klik "Tambah Akun" untuk memulai.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = currentGuruList.map(g => {
+                const fa = g.form_a || {};
+                const sudahIsiFormA = fa.nama && fa.mapel && fa.kelas;
+                const status = getStatusLabel(g.status);
+                const username = g.username || generateUsername(g.nama);
+                
+                return `
+                <div class="card-blue p-4">
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="flex items-center gap-3">
+                            <div class="bg-blue-100 w-10 h-10 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-blue-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-800 text-sm">${g.nama}</p>
+                                <p class="text-xs text-gray-500 mb-1">
+                                    <i class="fas fa-at text-blue-400"></i> <span class="font-mono">${username}</span>
+                                </p>
+                                ${sudahIsiFormA 
+                                    ? `<p class="text-xs text-gray-500">${fa.mapel} • Kelas ${fa.kelas}</p>`
+                                    : `<p class="text-xs text-yellow-600 italic"><i class="fas fa-clock mr-1"></i>Belum mengisi data identitas</p>`
+                                }
+                            </div>
+                        </div>
+                        <span class="status-badge ${status.class}">${status.label}</span>
+                    </div>
+                    <div class="flex gap-2 items-center">
+                        <button onclick="showPinModal('${g.id}')" class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 rounded-lg text-xs font-semibold transition">
+                            <i class="fas fa-key mr-1"></i> Lihat Kredensial
+                        </button>
+                        <button onclick="openGuruModal('${g.id}')" class="text-blue-600 hover:text-blue-800 p-2" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deleteGuru('${g.id}')" class="text-red-500 hover:text-red-700 p-2" title="Hapus">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        // ============================================================
+        // REKAP
+        // ============================================================
+        function filterRekap(status) {
+            currentFilter = status;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'text-white');
+                btn.classList.add('bg-gray-100', 'text-gray-600');
+            });
+            event.target.classList.remove('bg-gray-100', 'text-gray-600');
+            event.target.classList.add('bg-blue-600', 'text-white');
+            renderRekapList();
+        }
+
+        function getStatusLabel(status) {
+            const map = {
+                'pra': { label: 'Pra-Observasi', class: 'status-pra' },
+                'observasi': { label: 'Observasi', class: 'status-observasi' },
+                'selesai': { label: 'Selesai', class: 'status-selesai' }
+            };
+            return map[status] || map['pra'];
+        }
+
+        function renderRekapList() {
+            let list = currentGuruList;
+            if (currentFilter !== 'all') list = list.filter(g => g.status === currentFilter);
+            
+            const container = document.getElementById('rekapList');
+            
+            if (list.length === 0) {
+                container.innerHTML = `
+                    <div class="card-blue p-8 text-center">
+                        <i class="fas fa-inbox text-gray-300 text-4xl mb-3"></i>
+                        <p class="text-gray-500 text-sm">Tidak ada data untuk filter ini.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = list.map(g => {
+                const status = getStatusLabel(g.status);
+                const fa = g.form_a || {};
+                const sudahIsiFormA = fa.nama && fa.mapel && fa.kelas;
+                const username = g.username || generateUsername(g.nama);
+                
+                return `
+                    <div class="card-blue p-4">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <p class="font-semibold text-gray-800 text-sm">${g.nama}</p>
+                                <p class="text-xs text-gray-500 mb-1">
+                                    <i class="fas fa-at text-blue-400"></i> <span class="font-mono">${username}</span>
+                                </p>
+                                ${sudahIsiFormA 
+                                    ? `<p class="text-xs text-gray-500">${fa.mapel} • Kelas ${fa.kelas} • ${fa.materi || '-'}</p>`
+                                    : `<p class="text-xs text-yellow-600 italic"><i class="fas fa-clock mr-1"></i>Menunggu isian identitas guru</p>`
+                                }
+                            </div>
+                            <span class="status-badge ${status.class}">${status.label}</span>
+                        </div>
+                        ${sudahIsiFormA ? `
+                        <div class="grid grid-cols-2 gap-2 text-xs text-gray-600 mb-3">
+                            <div><i class="fas fa-calendar text-blue-400 mr-1"></i> ${fa.tanggal || '-'}</div>
+                            <div><i class="fas fa-clock text-blue-400 mr-1"></i> ${fa.jadwal || '-'}</div>
+                        </div>
+                        ` : ''}
+                        <button onclick="openSesiFromRekap('${g.id}')" class="w-full btn-primary text-white py-2 rounded-lg text-xs font-semibold">
+                            <i class="fas fa-folder-open mr-1"></i> Buka Sesi Supervisi
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ============================================================
+        // SESI SUPERVISI
+        // ============================================================
+        function populateSelectGuru() {
+            const select = document.getElementById('selectGuruSesi');
+            select.innerHTML = '<option value="">-- Pilih Guru --</option>' + 
+                currentGuruList.map(g => `<option value="${g.id}">${g.nama}</option>`).join('');
+        }
+
+        function startSesi() {
+            const id = document.getElementById('selectGuruSesi').value;
+            if (!id) { showToast('Pilih guru terlebih dahulu!', 'error'); return; }
+            openSesi(id);
+        }
+
+        function openSesiFromRekap(id) {
+            switchMainMenu('supervisi');
+            openSesi(id);
+        }
+
+        async function openSesi(id) {
+            const guru = currentGuruList.find(g => g.id === id);
+            if (!guru) return;
+            
+            currentSesiId = id;
+            const fa = guru.form_a || {};
+            const belumIsi = !fa.nama || !fa.mapel;
+            
+            document.getElementById('formAInfo').innerHTML = `
+                <div class="bg-blue-50/50 p-3 rounded-lg">
+                    <span class="text-gray-500 text-xs block mb-1">Nama Pendidik</span>
+                    <span class="font-semibold text-gray-800">${fa.nama || guru.nama}</span>
+                </div>
+                <div class="bg-blue-50/50 p-3 rounded-lg">
+                    <span class="text-gray-500 text-xs block mb-1">Mata Pelajaran</span>
+                    <span class="font-semibold text-gray-800">${fa.mapel || '<span class="text-yellow-600 italic">Belum diisi</span>'}</span>
+                </div>
+                <div class="bg-blue-50/50 p-3 rounded-lg">
+                    <span class="text-gray-500 text-xs block mb-1">Kelas / Semester</span>
+                    <span class="font-semibold text-gray-800">${fa.kelas || '<span class="text-yellow-600 italic">Belum diisi</span>'}</span>
+                </div>
+                <div class="bg-blue-50/50 p-3 rounded-lg">
+                    <span class="text-gray-500 text-xs block mb-1">Observer</span>
+                    <span class="font-semibold text-gray-800">${currentObserver ? currentObserver.nama : '-'}</span>
+                </div>
+                <div class="bg-blue-50/50 p-3 rounded-lg">
+                    <span class="text-gray-500 text-xs block mb-1">Hari / Tanggal</span>
+                    <span class="font-semibold text-gray-800">${fa.tanggal || '<span class="text-yellow-600 italic">Belum diisi</span>'}</span>
+                </div>
+                <div class="bg-blue-50/50 p-3 rounded-lg">
+                    <span class="text-gray-500 text-xs block mb-1">Alokasi Waktu</span>
+                    <span class="font-semibold text-gray-800">${fa.alokasi || '<span class="text-yellow-600 italic">Belum diisi</span>'}</span>
+                </div>
+                <div class="bg-blue-50/50 p-3 rounded-lg col-span-2">
+                    <span class="text-gray-500 text-xs block mb-1">Fokus Coaching</span>
+                    <span class="font-semibold text-blue-700">${fa.fokus || 'Pembelajaran Mendalam (Deep Learning)'}</span>
+                </div>
+                ${belumIsi ? `
+                <div class="col-span-2 bg-yellow-50 border-l-4 border-yellow-500 p-3 rounded-r-lg text-xs text-yellow-800">
+                    <i class="fas fa-exclamation-triangle mr-1"></i> <strong>Perhatian:</strong> Guru belum mengisi data identitas (Form A).
+                </div>
+                ` : ''}
+            `;
+            
+            const status = getStatusLabel(guru.status);
+            const badge = document.getElementById('sesiStatusBadge');
+            badge.className = 'status-badge ' + status.class;
+            badge.textContent = status.label;
+            
+            document.getElementById('ttdGuruNama').textContent = fa.nama || guru.nama;
+            document.getElementById('ttdGuruNip').textContent = 'NIP. ' + (fa.nip || '-');
+            document.getElementById('ttdObserverNama').textContent = currentObserver ? currentObserver.nama : '-';
+            document.getElementById('ttdObserverNip').textContent = 'NIP. ' + (currentObserver ? currentObserver.nip : '-');
+            
+            await loadFormBAndC(guru.id);
+            await loadRTLViewObserver(guru.id);
+            
+            document.getElementById('sesiAktif').classList.remove('hidden');
+            
+            if (guru.status === 'observasi') switchTab('observasi');
+            else if (guru.status === 'selesai') switchTab('pasca');
+            else switchTab('pra');
+        }
+
+        async function loadFormBAndC(guruId) {
+            const { data } = await _supabase.from('observasi').select('*').eq('guru_id', guruId);
+            const map = {};
+            (data || []).forEach(row => { map[row.indikator_id] = row.catatan; });
+            
+            document.getElementById('formB1a').value = map['b1a'] || '';
+            document.getElementById('formB1b').value = map['b1b'] || '';
+            document.getElementById('formB2').value = map['b2'] || '';
+            document.getElementById('formB3').value = map['b3'] || '';
+            document.getElementById('formC1').value = map['c1'] || '';
+            document.getElementById('formC2').value = map['c2'] || '';
+            document.getElementById('formC3').value = map['c3'] || '';
+            
+            // Load semua indikator 1-49
+            for (let i = 1; i <= 49; i++) {
+                const el = document.getElementById('obs_' + i);
+                if (el) el.value = map[String(i)] || '';
+            }
+            
+            document.getElementById('pascaApresiasi').value = map['pascaApresiasi'] || '';
+            document.getElementById('pascaFokus').value = map['pascaFokus'] || '';
+            document.getElementById('pascaTantangan').value = map['pascaTantangan'] || '';
+            document.getElementById('pascaRef1').value = map['pascaRef1'] || '';
+            document.getElementById('pascaRef2').value = map['pascaRef2'] || '';
+            document.getElementById('pascaRef3').value = map['pascaRef3'] || '';
+        }
+
+        let saveTimeouts = {};
+        function autoSave(indikatorId, value) {
+            if (!currentSesiId) return;
+            clearTimeout(saveTimeouts[indikatorId]);
+            saveTimeouts[indikatorId] = setTimeout(async () => {
+                try {
+                    const { data: existing } = await _supabase
+                        .from('observasi')
+                        .select('id')
+                        .eq('guru_id', currentSesiId)
+                        .eq('indikator_id', String(indikatorId))
+                        .maybeSingle();
+                    
+                    if (existing) {
+                        await _supabase.from('observasi').update({ catatan: value }).eq('id', existing.id);
+                    } else if (value) {
+                        await _supabase.from('observasi').insert({
+                            guru_id: currentSesiId,
+                            indikator_id: String(indikatorId),
+                            catatan: value
+                        });
+                    }
+                } catch (err) { console.error('Auto-save error:', err); }
+            }, 800);
+        }
+
+        function attachAutoSave() {
+            const fieldMap = {
+                'formB1a': 'b1a', 'formB1b': 'b1b', 'formB2': 'b2', 'formB3': 'b3',
+                'formC1': 'c1', 'formC2': 'c2', 'formC3': 'c3',
+                'pascaApresiasi': 'pascaApresiasi', 'pascaFokus': 'pascaFokus',
+                'pascaTantangan': 'pascaTantangan',
+                'pascaRef1': 'pascaRef1', 'pascaRef2': 'pascaRef2', 'pascaRef3': 'pascaRef3'
+            };
+            
+            // Semua 49 indikator observasi
+            for (let i = 1; i <= 49; i++) {
+                fieldMap['obs_' + i] = String(i);
+            }
+            
+            Object.keys(fieldMap).forEach(id => {
+                const el = document.getElementById(id);
+                if (el && !el.dataset.autosaveAttached) {
+                    el.dataset.autosaveAttached = 'true';
+                    el.addEventListener('input', () => autoSave(fieldMap[id], el.value));
+                }
+            });
+        }
+
+        async function loadRTLViewObserver(guruId) {
+            const container = document.getElementById('rtlViewObserver');
+            try {
+                const { data, error } = await _supabase
+                    .from('rtl')
+                    .select('*')
+                    .eq('guru_id', guruId)
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                
+                if (!data || data.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-4">
+                            <i class="fas fa-inbox text-gray-300 text-2xl mb-2"></i>
+                            <p class="text-gray-500 text-xs">Guru belum mengisi RTL.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = data.map(r => `
+                    <div class="border border-blue-100 rounded-xl p-4 bg-blue-50/30 mb-3">
+                        <div class="flex justify-between items-start mb-2">
+                            <p class="font-semibold text-sm text-blue-800">${r.area}</p>
+                            <span class="badge-blue">${r.bentuk || '-'}</span>
+                        </div>
+                        <p class="text-xs text-gray-600 mb-2"><i class="fas fa-lightbulb text-blue-400 mr-1"></i> ${r.aktivitas || '-'}</p>
+                        <div class="grid grid-cols-2 gap-2 text-xs text-gray-500">
+                            <div><i class="fas fa-clock text-blue-400 mr-1"></i> ${r.waktu || '-'}</div>
+                            <div><i class="fas fa-check-circle text-green-400 mr-1"></i> ${r.ukuran || '-'}</div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `<p class="text-xs text-red-500">Gagal memuat RTL.</p>`;
+            }
+        }
+
+        async function updateStatusSesi(newStatus) {
+            if (!currentSesiId) return;
+            
+            const guru = currentGuruList.find(g => g.id === currentSesiId);
+            if (newStatus === 'observasi') {
+                const fa = guru.form_a || {};
+                if (!fa.nama || !fa.mapel || !fa.kelas) {
+                    if (!confirm('Guru belum mengisi data identitas (Form A). Yakin ingin lanjut ke Observasi?')) return;
+                }
+            }
+            
+            showLoading();
+            try {
+                const { error } = await _supabase.from('guru').update({ status: newStatus }).eq('id', currentSesiId);
+                if (error) throw error;
+                
+                const idx = currentGuruList.findIndex(g => g.id === currentSesiId);
+                if (idx >= 0) currentGuruList[idx].status = newStatus;
+                
+                const status = getStatusLabel(newStatus);
+                const badge = document.getElementById('sesiStatusBadge');
+                badge.className = 'status-badge ' + status.class;
+                badge.textContent = status.label;
+                
+                if (newStatus === 'observasi') switchTab('observasi');
+                else if (newStatus === 'pasca') switchTab('pasca');
+                
+                renderRekapList();
+                updateStats();
+                showToast('Status sesi diperbarui.', 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('Gagal update status: ' + err.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function selesaikanSesi() {
+            if (!confirm('Selesaikan sesi supervisi ini? Status akan berubah menjadi "Selesai".')) return;
+            updateStatusSesi('selesai');
+        }
+
+        // ============================================================
+        // STATS
+        // ============================================================
+        function updateStats() {
+            document.getElementById('statTotalGuru').textContent = currentGuruList.length;
+            document.getElementById('statPra').textContent = currentGuruList.filter(g => g.status === 'pra').length;
+            document.getElementById('statObservasi').textContent = currentGuruList.filter(g => g.status === 'observasi').length;
+            document.getElementById('statSelesai').textContent = currentGuruList.filter(g => g.status === 'selesai').length;
+        }
+
+        // ============================================================
+        // NAVIGASI OBSERVER
+        // ============================================================
+        function switchMainMenu(menu) {
+            document.querySelectorAll('.menu-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById('content-' + menu).classList.remove('hidden');
+            
+            document.querySelectorAll('[id^="menu-"]').forEach(el => {
+                el.classList.remove('tab-active');
+                el.classList.add('tab-inactive');
+            });
+            document.getElementById('menu-' + menu).classList.remove('tab-inactive');
+            document.getElementById('menu-' + menu).classList.add('tab-active');
+            
+            if (menu === 'rekap') renderRekapList();
+            if (menu === 'dashboard') updateStats();
+            if (menu === 'kredensial') renderKredensialInfo();
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById('content-' + tabName).classList.remove('hidden');
+            
+            document.querySelectorAll('[id^="tab-"]').forEach(el => {
+                el.classList.remove('tab-active');
+                el.classList.add('tab-inactive');
+            });
+            document.getElementById('tab-' + tabName).classList.remove('tab-inactive');
+            document.getElementById('tab-' + tabName).classList.add('tab-active');
+            
+            if (tabName === 'observasi' || tabName === 'pra' || tabName === 'pasca') attachAutoSave();
+        }
+
+        function toggleAccordion(id) {
+            const content = document.getElementById(id);
+            content.classList.toggle('active');
+            const icon = content.previousElementSibling.querySelector('i:last-child');
+            if (content.classList.contains('active')) {
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+            } else {
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+            }
+        }
+
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+        // ============================================================
+        // GURU APP
+        // ============================================================
+        async function initGuruApp() {
+            const auth = JSON.parse(localStorage.getItem('supervisi_auth'));
+            if (!auth || !auth.guruId) return;
+            
+            showLoading();
+            try {
+                const { data: guru, error } = await _supabase.from('guru').select('*').eq('id', auth.guruId).single();
+                if (error) throw error;
+                
+                document.getElementById('headerGuruName').textContent = guru.nama;
+                const username = guru.username || generateUsername(guru.nama);
+                document.getElementById('guruUsernameBadge').textContent = username;
+                
+                const fa = guru.form_a || {};
+                document.getElementById('faNama').value = fa.nama || guru.nama;
+                document.getElementById('faNip').value = fa.nip || '';
+                document.getElementById('faMapel').value = fa.mapel || '';
+                document.getElementById('faKelas').value = fa.kelas || '';
+                document.getElementById('faMateri').value = fa.materi || '';
+                document.getElementById('faTanggal').value = fa.tanggal || '';
+                document.getElementById('faAlokasi').value = fa.alokasi || '';
+                document.getElementById('faJadwal').value = fa.jadwal || '';
+                document.getElementById('faFokus').value = fa.fokus || 'Pembelajaran Mendalam (Deep Learning)';
+                
+                document.getElementById('faObserver').value = currentObserver ? currentObserver.nama : '-';
+                
+                renderGuruStatusInfo(guru);
+                await renderRTLListGuru(guru.id);
+            } catch (err) {
+                console.error(err);
+                showToast('Gagal memuat data: ' + err.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function renderGuruStatusInfo(guru) {
+            const status = getStatusLabel(guru.status);
+            const container = document.getElementById('guruStatusInfo');
+            
+            const steps = [
+                { key: 'pra', label: 'Pra-Observasi', icon: 'fa-clipboard-list', desc: 'Isi Form A & telaah perencanaan' },
+                { key: 'observasi', label: 'Observasi Kelas', icon: 'fa-eye', desc: 'Observer mencatat bukti faktual' },
+                { key: 'selesai', label: 'Pasca-Observasi', icon: 'fa-comments', desc: 'Refleksi & RTL' }
+            ];
+            
+            const statusOrder = { 'pra': 0, 'observasi': 1, 'selesai': 2 };
+            const currentIdx = statusOrder[guru.status] || 0;
+            
+            container.innerHTML = `
+                <div class="bg-gradient-to-r from-blue-50 to-white border border-blue-200 rounded-xl p-4 mb-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-500">Status Saat Ini</span>
+                        <span class="status-badge ${status.class}">${status.label}</span>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    ${steps.map((s, i) => `
+                        <div class="flex items-center gap-3 p-3 rounded-lg ${i <= currentIdx ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50 border border-gray-200'}">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center ${i <= currentIdx ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-500'}">
+                                <i class="fas ${i < currentIdx ? 'fa-check' : s.icon} text-xs"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm font-semibold ${i <= currentIdx ? 'text-blue-800' : 'text-gray-500'}">${s.label}</p>
+                                <p class="text-xs text-gray-500">${s.desc}</p>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        async function saveFormA(e) {
+            e.preventDefault();
+            const auth = JSON.parse(localStorage.getItem('supervisi_auth'));
+            if (!auth || !auth.guruId) return;
+            
+            const formA = {
+                nama: document.getElementById('faNama').value,
+                nip: document.getElementById('faNip').value,
+                mapel: document.getElementById('faMapel').value,
+                kelas: document.getElementById('faKelas').value,
+                materi: document.getElementById('faMateri').value,
+                tanggal: document.getElementById('faTanggal').value,
+                alokasi: document.getElementById('faAlokasi').value,
+                jadwal: document.getElementById('faJadwal').value,
+                fokus: document.getElementById('faFokus').value,
+                observer: document.getElementById('faObserver').value,
+                updatedAt: Date.now()
+            };
+            
+            showLoading();
+            try {
+                const { error } = await _supabase.from('guru').update({ form_a: formA }).eq('id', auth.guruId);
+                if (error) throw error;
+                showToast('✅ Identitas (Form A) berhasil disimpan!', 'success');
+                await initGuruApp();
+            } catch (err) {
+                console.error(err);
+                showToast('Gagal menyimpan: ' + err.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function saveRTL(e) {
+            e.preventDefault();
+            const auth = JSON.parse(localStorage.getItem('supervisi_auth'));
+            if (!auth || !auth.guruId) return;
+            
+            const { data: guru } = await _supabase.from('guru').select('status, nama').eq('id', auth.guruId).single();
+            
+            if (guru && (guru.status === 'pra' || guru.status === 'observasi')) {
+                showToast('⚠️ RTL hanya dapat diisi setelah sesi Pasca-Observasi dimulai.', 'error');
+                return;
+            }
+            
+            const rtl = {
+                guru_id: auth.guruId,
+                area: document.getElementById('rtlArea').value,
+                bentuk: document.getElementById('rtlBentuk').value,
+                aktivitas: document.getElementById('rtlAktivitas').value,
+                waktu: document.getElementById('rtlWaktu').value,
+                ukuran: document.getElementById('rtlUkuran').value
+            };
+            
+            showLoading();
+            try {
+                const { error } = await _supabase.from('rtl').insert(rtl);
+                if (error) throw error;
+                document.getElementById('formRTL').reset();
+                showToast('✅ Rencana Tindak Lanjut berhasil disimpan!', 'success');
+                await renderRTLListGuru(auth.guruId);
+            } catch (err) {
+                console.error(err);
+                showToast('Gagal menyimpan RTL: ' + err.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function renderRTLListGuru(guruId) {
+            const container = document.getElementById('rtlListGuru');
+            const infoBox = document.getElementById('rtlInfoGuru');
+            
+            const { data: guru } = await _supabase.from('guru').select('status').eq('id', guruId).single();
+            
+            if (guru && (guru.status === 'pra' || guru.status === 'observasi')) {
+                infoBox.className = 'bg-yellow-50 border-l-4 border-yellow-500 p-3 rounded-r-lg mb-4 text-xs text-yellow-800';
+                infoBox.innerHTML = '<i class="fas fa-lock mr-1"></i> Form RTL akan aktif setelah Kepala Sekolah memulai tahap Pasca-Observasi.';
+            } else {
+                infoBox.className = 'bg-green-50 border-l-4 border-green-500 p-3 rounded-r-lg mb-4 text-xs text-green-800';
+                infoBox.innerHTML = '<i class="fas fa-check-circle mr-1"></i> Anda dapat mengisi RTL di bawah ini.';
+            }
+            
+            const { data, error } = await _supabase
+                .from('rtl')
+                .select('*')
+                .eq('guru_id', guruId)
+                .order('created_at', { ascending: false });
+            
+            if (error || !data || data.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-6">
+                        <i class="fas fa-inbox text-gray-300 text-3xl mb-2"></i>
+                        <p class="text-gray-500 text-xs">Belum ada RTL tersimpan.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = data.map(r => `
+                <div class="border border-blue-100 rounded-xl p-4 bg-blue-50/30">
+                    <div class="flex justify-between items-start mb-2">
+                        <p class="font-semibold text-sm text-blue-800">${r.area}</p>
+                        <span class="badge-blue">${r.bentuk || '-'}</span>
+                    </div>
+                    <p class="text-xs text-gray-600 mb-2"><i class="fas fa-lightbulb text-blue-400 mr-1"></i> ${r.aktivitas || '-'}</p>
+                    <div class="grid grid-cols-2 gap-2 text-xs text-gray-500">
+                        <div><i class="fas fa-clock text-blue-400 mr-1"></i> ${r.waktu || '-'}</div>
+                        <div><i class="fas fa-check-circle text-green-400 mr-1"></i> ${r.ukuran || '-'}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function switchGuruMenu(menu) {
+            document.querySelectorAll('.gmenu-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById('gcontent-' + menu).classList.remove('hidden');
+            
+            document.querySelectorAll('[id^="gmenu-"]').forEach(el => {
+                el.classList.remove('tab-active');
+                el.classList.add('tab-inactive');
+            });
+            document.getElementById('gmenu-' + menu).classList.remove('tab-inactive');
+            document.getElementById('gmenu-' + menu).classList.add('tab-active');
+        }
+
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) overlay.classList.remove('active');
+            });
+        });
+
+        checkAuth();
+    </script>
+</body>
+</html>
